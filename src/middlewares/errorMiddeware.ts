@@ -9,8 +9,8 @@ export default async (
 ) => {
   if (err instanceof AppError) {
     return response.status(err.statusCode).json({
-      status: `error ${err.statusCode}`,
-      message: err.message,
+      status: "error",
+      data: err.message,
     });
   }
 
@@ -18,6 +18,6 @@ export default async (
 
   return response.status(500).json({
     status: "error",
-    message: "Ocorreu um erro inesperado!",
+    data: "Ocorreu um erro inesperado!",
   });
 };

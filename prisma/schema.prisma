@@ -65,4 +65,6 @@ model Request {
   status            RequestType @default(AGUARDANDO_CONFIRMACAO)
   productId         String
   userId            String
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
 }

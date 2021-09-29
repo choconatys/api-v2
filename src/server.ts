@@ -16,5 +16,8 @@ server.use("/v1", routes);
 server.use(errorMiddeware);
 
 server.listen(process.env.PORT || 3030, () => {
-  console.log("\nAPI EXPRESS INCIADA!\n");
+  console.log(`
+    SERVIDOR CHOCONATYS INICIADO
+    RODANDO NA PORTA: ${process.env.PORT || 3030}
+  `);
 });

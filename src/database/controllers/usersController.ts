@@ -13,6 +13,7 @@ class UsersController {
     await prisma.user
       .findMany({
         select: {
+          id: true,
           name: true,
           email: true,
           address: true,
@@ -112,6 +113,7 @@ class UsersController {
             },
           },
           select: {
+            id: true,
             name: true,
             email: true,
             role: {
