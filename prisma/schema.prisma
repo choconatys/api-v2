@@ -1,0 +1,68 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RequestType {
+  AGUARDANDO_CONFIRMACAO
+  EM_PRODUCAO
+  PRONTO_PARA_ENVIO
+  ENVIADO
+}
+
+enum RolesType {
+  USER
+  ADMIN
+}
+
+model User {
+  id         String    @id @default(uuid())
+  name       String
+  email      String
+  password   String
+  address    String
+  role       Role      @relation(fields: [roleId], references: [id])
+  requests   Request[]
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  roleId     String
+}
+
+model Role {
+  id         String    @id @default(uuid())
+  name       RolesType @default(USER)
+  user       User[]
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  photo       String?
+  price       Float
+  quantity    Int
+  available   Boolean
+  requests    Request[]
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+}
+
+model Request {
+  id                String      @id @default(uuid())
+  code              String
+  product           Product     @relation(fields: [productId], references: [id])
+  user              User        @relation(fields: [userId], references: [id])
+  quantity          Int
+  value_per_product Float
+  delivery_tax      Float
+  total             Float
+  status            RequestType @default(AGUARDANDO_CONFIRMACAO)
+  productId         String
+  userId            String
+}
