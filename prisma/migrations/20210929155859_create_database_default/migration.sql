@@ -20,7 +20,7 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Role" (
-    "id" TEXT NOT NULL DEFAULT E'uuid()',
+    "id" TEXT NOT NULL,
     "name" "RolesType" NOT NULL DEFAULT E'USER',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE "Role" (
 
 -- CreateTable
 CREATE TABLE "Product" (
-    "id" TEXT NOT NULL DEFAULT E'uuid()',
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "photo" TEXT,
@@ -57,6 +57,9 @@ CREATE TABLE "Request" (
 
     CONSTRAINT "Request_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

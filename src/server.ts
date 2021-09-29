@@ -1,11 +1,20 @@
+import express from "express";
+import cors from "cors";
+
 import "express-async-errors";
+import "reflect-metadata";
 
-import dotenv from "dotenv";
+import routes from "./routes/index.routes";
+import errorMiddeware from "./middlewares/errorMiddeware";
 
-import App from "./app";
+const server = express();
 
-dotenv.config();
+server.use(cors());
+server.use(express.json());
+server.use("/v1", routes);
 
-App.listen(process.env.PORT || 3030, () => {
-  console.log(`\nServer: Api iniciada com sucesso!\n`);
+server.use(errorMiddeware);
+
+server.listen(process.env.PORT || 3030, () => {
+  console.log("\nAPI EXPRESS INCIADA!\n");
 });
