@@ -34,7 +34,7 @@ model User {
 
 model Role {
   id         String    @id @default(uuid())
-  name       RolesType @default(USER)
+  name       RolesType @default(USER) @unique
   user       User[]
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
