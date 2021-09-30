@@ -70,6 +70,11 @@ class UsersController {
 
     const { name, address, passwordConfirm } = request.body;
 
+    let objectTest: any = {};
+
+    if (name) objectTest.name = name;
+    if (address) objectTest.address = address;
+
     if (!isUuid(id)) throw new AppError("Erro, id invalido!", 404);
 
     await prisma.user
@@ -94,10 +99,7 @@ class UsersController {
             where: {
               id,
             },
-            data: {
-              name,
-              address,
-            },
+            data: objectTest,
           })
           .then((user) => {
             return response.json({
