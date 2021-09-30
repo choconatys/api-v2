@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 
 import { isUuid } from "uuidv4";
+import cloudinary from "cloudinary";
 
 import ProductCreate from "../interfaces/productCreate";
 import AppError from "../../services/appError";
@@ -49,6 +50,22 @@ class ProductsController {
   }
 
   public async create(request: Request, response: Response) {
+    const date = new Date();
+
+    date.setMilliseconds(0);
+    date.setSeconds(0);
+
+    const fileName = `${date.getDate()}-${date.getTime()}-${request.file.originalname.replace(
+      " ",
+      ""
+    )}`;
+
+    cloudinary.v2.config({
+      cloud_name: "choconatys",
+      api_key: "346924178573599",
+      api_secret: "fIQMrIKgGl7Gu4O1bLLPYOuuzD8",
+    });
+
     const prisma = new PrismaClient();
 
     const { name, description, price }: ProductCreate = request.body;
@@ -64,26 +81,36 @@ class ProductsController {
         ""
       )}`;
 
-      await prisma.product
-        .create({
-          data: {
-            name,
-            photo: fileName,
-            description,
-            price: Number(price),
-            available: true,
-            quantity: 1,
-          },
-        })
-        .then((productCreated) => {
-          return response.json({
-            status: "success",
-            data: productCreated,
-          });
-        })
-        .finally(() => {
-          prisma.$disconnect();
-        });
+      cloudinary.v2.uploader.upload(
+        request.file.path,
+        { public_id: fileName },
+        async function (error, result) {
+          if (error) {
+            throw new AppError("Erro, não foi possivel continuar!");
+          } else {
+            await prisma.product
+              .create({
+                data: {
+                  name,
+                  photo: result.secure_url,
+                  description,
+                  price: Number(price),
+                  available: true,
+                  quantity: 1,
+                },
+              })
+              .then((productCreated) => {
+                return response.json({
+                  status: "success",
+                  data: productCreated,
+                });
+              })
+              .finally(() => {
+                prisma.$disconnect();
+              });
+          }
+        }
+      );
     } else {
       throw new AppError("Erro, preencha todos os campos necessarios!", 406);
     }
