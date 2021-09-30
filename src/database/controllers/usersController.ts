@@ -68,30 +68,43 @@ class UsersController {
 
     const { id } = request.params;
 
-    const { name, address, password } = request.body;
-
-    const matchPassword = await compare(password, password);
+    const { name, address, passwordConfirm } = request.body;
 
     if (!isUuid(id)) throw new AppError("Erro, id invalido!", 404);
 
-    if (!matchPassword)
-      throw new AppError("Erro, email ou senha incorreta!", 401);
-
     await prisma.user
-      .update({
+      .findUnique({
         where: {
           id,
         },
-        data: {
-          name,
-          address,
+        select: {
+          password: true,
         },
       })
-      .then((user) => {
-        return response.json({
-          status: "success",
-          data: user,
-        });
+      .then(async (user) => {
+        if (!user) throw new AppError("Erro, usuario não encontrado!", 404);
+
+        const matchPassword = await compare(passwordConfirm, user.password);
+
+        if (!matchPassword)
+          throw new AppError("Erro, email ou senha incorreta!", 401);
+
+        await prisma.user
+          .update({
+            where: {
+              id,
+            },
+            data: {
+              name,
+              address,
+            },
+          })
+          .then((user) => {
+            return response.json({
+              status: "success",
+              data: user,
+            });
+          });
       })
       .finally(() => {
         prisma.$disconnect();
