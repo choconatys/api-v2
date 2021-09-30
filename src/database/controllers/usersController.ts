@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 
-import bcryptjs from "bcryptjs";
+import bcryptjs, { compare } from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
 import UserCreate from "../interfaces/userCreate";
 import AppError from "../../services/appError";
+import { isUuid } from "uuidv4";
 
 class UsersController {
   public async find(request: Request, response: Response) {
@@ -62,6 +63,40 @@ class UsersController {
       });
   }
 
+  public async update(request: Request, response: Response) {
+    const prisma = new PrismaClient();
+
+    const { id } = request.params;
+
+    const { name, address, password } = request.body;
+
+    const matchPassword = await compare(password, password);
+
+    if (!isUuid(id)) throw new AppError("Erro, id invalido!", 404);
+
+    if (!matchPassword)
+      throw new AppError("Erro, email ou senha incorreta!", 401);
+
+    await prisma.user
+      .update({
+        where: {
+          id,
+        },
+        data: {
+          name,
+          address,
+        },
+      })
+      .then((user) => {
+        return response.json({
+          status: "success",
+          data: user,
+        });
+      })
+      .finally(() => {
+        prisma.$disconnect();
+      });
+  }
   public async create(request: Request, response: Response) {
     const prisma = new PrismaClient();
 

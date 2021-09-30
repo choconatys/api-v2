@@ -35,31 +35,26 @@ class ProductsController {
 
     if (!isUuid(id)) throw new AppError("Erro, id invalido!", 404);
 
-    const product = await prisma.product.findUnique({
-      where: {
-        id,
-      },
-    });
+    await prisma.product
+      .findUnique({
+        where: {
+          id,
+        },
+      })
+      .then((product) => {
+        if (!product) throw new AppError("Produto não encontrado!", 404);
 
-    if (!product) throw new AppError("Produto não encontrado!", 404);
-
-    return response.json({
-      status: "success",
-      data: product,
-    });
+        return response.json({
+          status: "success",
+          data: product,
+        });
+      })
+      .finally(() => {
+        prisma.$disconnect();
+      });
   }
 
   public async create(request: Request, response: Response) {
-    const date = new Date();
-
-    date.setMilliseconds(0);
-    date.setSeconds(0);
-
-    const fileName = `${date.getDate()}-${date.getTime()}-${request.file.originalname.replace(
-      " ",
-      ""
-    )}`;
-
     cloudinary.v2.config({
       cloud_name: "choconatys",
       api_key: "346924178573599",
@@ -67,6 +62,10 @@ class ProductsController {
     });
 
     const prisma = new PrismaClient();
+    const date = new Date();
+
+    date.setMilliseconds(0);
+    date.setSeconds(0);
 
     const { name, description, price }: ProductCreate = request.body;
 

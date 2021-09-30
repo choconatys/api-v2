@@ -17,6 +17,8 @@ usersRoutes.get(
 );
 usersRoutes.post("/", usersController.create);
 
+usersRoutes.put("/:id", ensureAuthenticated, usersController.update);
+
 usersRoutes.get(
   "/quantity",
   ensureAuthenticated,
