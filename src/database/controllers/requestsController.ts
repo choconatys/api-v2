@@ -169,8 +169,8 @@ class RequestsController {
           .then(async (user) => {
             if (!user) throw new AppError("Usuario não encontrado!");
 
-            requestData.user = user;
-            requestData.product = product;
+            requestData.userId = userId;
+            requestData.productId = product.id;
             requestData.value_per_product = product.price;
             requestData.status = "AGUARDANDO_CONFIRMACAO";
 
@@ -179,39 +179,43 @@ class RequestsController {
               requestData.quantity * requestData.value_per_product +
               requestData.delivery_tax;
 
-            await prisma.product
-              .update({
-                where: {
-                  id: product.id,
-                },
-                data: {
-                  quantity: product.quantity - requestData.quantity,
-                },
+            await prisma.request
+              .create({
+                data: requestData,
               })
-              .then(async (product) => {
-                if (product.quantity === 0) {
-                  await prisma.product.update({
+              .then((request) => {
+                return response.json({
+                  status: "success",
+                  data: request,
+                });
+              })
+              .then(async (request) => {
+                await prisma.product
+                  .update({
                     where: {
                       id: product.id,
                     },
                     data: {
-                      available: false,
+                      quantity: product.quantity - requestData.quantity,
                     },
-                  });
-                }
-
-                await prisma.request
-                  .create({
-                    data: requestData,
                   })
-                  .then((request) => {
-                    return response.json({
-                      status: "success",
-                      data: request,
-                    });
+                  .then(async (product) => {
+                    if (product.quantity === 0) {
+                      await prisma.product.update({
+                        where: {
+                          id: product.id,
+                        },
+                        data: {
+                          available: false,
+                        },
+                      });
+                    }
                   });
               });
           });
+      })
+      .finally(() => {
+        prisma.$disconnect();
       });
   }
 
