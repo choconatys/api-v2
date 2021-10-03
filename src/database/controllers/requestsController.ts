@@ -138,85 +138,83 @@ class RequestsController {
   public async create(request: Request, response: Response) {
     const prisma = new PrismaClient();
 
-    const { id } = request.params;
     const userId = request.user.id;
 
     const requestData = request.body;
 
-    if (!id || !userId)
-      throw new AppError("Falta itens para completar o pedido!");
+    if (!userId) throw new AppError("Falta itens para completar o pedido!");
 
-    await prisma.product
-      .findUnique({
-        where: {
-          id,
-        },
-      })
-      .then(async (product) => {
-        if (!product) throw new AppError("Produto não encontrado!");
-        if (!product.available)
-          throw new AppError("O produto não esta disponivel!");
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
 
-        if (requestData.quantity > product.quantity)
-          throw new AppError("Não temos essa quantia no estoque!");
+    if (!user) throw new AppError("Usuario não encontrado!");
 
-        await prisma.user
-          .findUnique({
-            where: {
-              id: userId,
-            },
-          })
-          .then(async (user) => {
-            if (!user) throw new AppError("Usuario não encontrado!");
+    requestData.requests.map(async (reqData) => {
+      await prisma.product
+        .findUnique({
+          where: {
+            id: reqData.id,
+          },
+        })
+        .then(async (product) => {
+          if (!product) throw new AppError("Produto não encontrado!");
+          if (!product.available)
+            throw new AppError("O produto não esta disponivel!");
 
-            requestData.userId = userId;
-            requestData.productId = product.id;
-            requestData.value_per_product = product.price;
-            requestData.status = "AGUARDANDO_CONFIRMACAO";
+          if (reqData.quantity > product.quantity)
+            throw new AppError("Não temos essa quantia no estoque!");
 
-            requestData.delivery_tax = 5;
-            requestData.total =
-              requestData.quantity * requestData.value_per_product +
-              requestData.delivery_tax;
-
-            await prisma.request
-              .create({
-                data: requestData,
-              })
-              .then((request) => {
-                return response.json({
-                  status: "success",
-                  data: request,
+          await prisma.request
+            .create({
+              data: {
+                code: requestData.code,
+                quantity: reqData.quantity,
+                userId,
+                productId: reqData.id,
+                value_per_product: reqData.price,
+                status: "AGUARDANDO_CONFIRMACAO",
+                delivery_tax: 5,
+                total: reqData.itemTotal,
+              },
+            })
+            .then(async () => {
+              await prisma.product
+                .update({
+                  where: {
+                    id: product.id,
+                  },
+                  data: {
+                    quantity: product.quantity - reqData.quantity,
+                  },
+                  select: {
+                    id: true,
+                    quantity: true,
+                  },
+                })
+                .then(async (product) => {
+                  if (product.quantity === 0) {
+                    await prisma.product.update({
+                      where: {
+                        id: product.id,
+                      },
+                      data: {
+                        available: false,
+                      },
+                    });
+                  }
                 });
-              })
-              .then(async (request) => {
-                await prisma.product
-                  .update({
-                    where: {
-                      id: product.id,
-                    },
-                    data: {
-                      quantity: product.quantity - requestData.quantity,
-                    },
-                  })
-                  .then(async (product) => {
-                    if (product.quantity === 0) {
-                      await prisma.product.update({
-                        where: {
-                          id: product.id,
-                        },
-                        data: {
-                          available: false,
-                        },
-                      });
-                    }
-                  });
-              });
-          });
-      })
-      .finally(() => {
-        prisma.$disconnect();
-      });
+            });
+        });
+    });
+
+    prisma.$disconnect();
+    return response.json({
+      status: "success",
+      data: "Pedidos criados com sucesso!",
+    });
   }
 
   public async findOneById(request: Request, response: Response) {
@@ -228,6 +226,19 @@ class RequestsController {
       .findMany({
         where: {
           userId: request.user.id,
+        },
+        select: {
+          id: true,
+          code: true,
+          product: true,
+          delivery_tax: true,
+          quantity: true,
+          status: true,
+          total: true,
+          user: true,
+          value_per_product: true,
+          created_at: true,
+          updated_at: true,
         },
       })
       .then(async (requests) => {
@@ -295,7 +306,12 @@ class RequestsController {
           })
         );
 
-        return response.json(finalRequestToSend);
+        console.log(finalRequestToSend);
+
+        return response.json({
+          status: "success",
+          data: finalRequestToSend,
+        });
       })
       .finally(() => {
         prisma.$disconnect();

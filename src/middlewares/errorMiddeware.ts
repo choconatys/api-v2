@@ -14,8 +14,6 @@ export default async (
     });
   }
 
-  console.log(err);
-
   return response.status(500).json({
     status: "error",
     data: "Ocorreu um erro inesperado!",

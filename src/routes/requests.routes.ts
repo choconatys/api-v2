@@ -16,7 +16,7 @@ requestsRoutes.get(
   requestsController.findOneById
 );
 
-requestsRoutes.post("/:id", ensureAuthenticated, requestsController.create);
+requestsRoutes.post("/", ensureAuthenticated, requestsController.create);
 // requestsRoutes.patch("/status/:code", ensureAuthenticated, adminAuthorization, requestsController.toggleStatus);
 
 export default requestsRoutes;

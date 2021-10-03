@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import { PrismaClient } from "@prisma/client";
 
-import { sign, verify } from "jsonwebtoken";
+import { sign, verify, decode } from "jsonwebtoken";
 import { compare } from "bcryptjs";
 
 import SessionCreate from "../interfaces/sessionCreate";
@@ -73,18 +73,15 @@ export default class SessionsController {
 
     const { secret } = authConfig;
 
-    let informationToken: any;
+    let tokenIsTrue: any = verify(token, secret);
 
-    try {
-      informationToken = verify(token, secret);
-    } catch (error) {
-      throw new AppError("Erro ao verificar o token!", 401);
-    }
+    if (!tokenIsTrue)
+      throw new AppError("Erro ao verificar autenticidade de usuario!");
 
     await prisma.user
       .findUnique({
         where: {
-          id: informationToken.user.id,
+          id: tokenIsTrue.user.id,
         },
         select: {
           id: true,
@@ -105,7 +102,13 @@ export default class SessionsController {
           isAdmin: user.role.name === "ADMIN",
         };
 
-        return response.json(responseVerifyToken);
+        return response.json({
+          status: "success",
+          data: responseVerifyToken,
+        });
+      })
+      .catch((e) => {
+        throw new AppError("Teste");
       })
       .finally(() => {
         prisma.$disconnect();

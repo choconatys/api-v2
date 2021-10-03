@@ -15,7 +15,6 @@ const server = express();
 server.use(cors());
 server.use(express.json());
 server.use("/v1", routes);
-
 server.use(errorMiddeware);
 
 server.listen(process.env.PORT || 3030, async () => {
