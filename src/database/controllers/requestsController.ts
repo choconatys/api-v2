@@ -306,8 +306,6 @@ class RequestsController {
           })
         );
 
-        console.log(finalRequestToSend);
-
         return response.json({
           status: "success",
           data: finalRequestToSend,
