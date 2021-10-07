@@ -14,7 +14,15 @@ const productRoutes = Router();
 const productsController = new ProductsController();
 
 productRoutes.get("/", productsController.find);
+productRoutes.get(
+  "/all",
+  ensureAuthenticated,
+  adminAuthorization,
+  productsController.findAll
+);
+
 productRoutes.get("/:id", productsController.findOne);
+productRoutes.patch("/available/:id", productsController.toggleAvailable);
 
 productRoutes.post(
   "/",

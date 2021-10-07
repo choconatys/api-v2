@@ -135,6 +135,73 @@ class RequestsController {
       });
   }
 
+  public async toggleStatus(request: Request, response: Response) {
+    const prisma = new PrismaClient();
+
+    const { code } = request.params;
+
+    if (!code) throw new AppError("Erro, não foi possivel achar o id!");
+
+    await prisma.request
+      .findMany({ where: { code } })
+      .then(async (requests) => {
+        if (!requests || requests.length == 0) {
+          throw new AppError("Erro, nenhum pedido encontrado!");
+        }
+
+        let lastStatus = "";
+        const requestStatus = requests.map((reqItem) => {
+          if (lastStatus == "") {
+            lastStatus = reqItem.status;
+          } else {
+            if (lastStatus != reqItem.status) {
+              throw new AppError("Erro ao verificar o status do pedido!");
+            } else {
+              return reqItem.status;
+            }
+          }
+        });
+
+        if (lastStatus == "AGUARDANDO_CONFIRMACAO") {
+          await prisma.request.updateMany({
+            where: {
+              code,
+              status: lastStatus,
+            },
+            data: {
+              status: "EM_PRODUCAO",
+            },
+          });
+        } else if (lastStatus == "EM_PRODUCAO") {
+          await prisma.request.updateMany({
+            where: {
+              code,
+              status: lastStatus,
+            },
+            data: {
+              status: "PRONTO_PARA_ENVIO",
+            },
+          });
+        } else if (lastStatus === "PRONTO_PARA_ENVIO") {
+          await prisma.request.updateMany({
+            where: {
+              code,
+              status: lastStatus,
+            },
+            data: {
+              status: "ENVIADO",
+            },
+          });
+        }
+
+        return response.json({
+          status: "success",
+          data: "Status alterado com sucesso!",
+        });
+      })
+      .finally(() => prisma.$disconnect());
+  }
+
   public async create(request: Request, response: Response) {
     const prisma = new PrismaClient();
 
@@ -164,8 +231,9 @@ class RequestsController {
           if (!product.available)
             throw new AppError("O produto não esta disponivel!");
 
-          if (reqData.quantity > product.quantity)
+          if (reqData.quantity > product.quantity) {
             throw new AppError("Não temos essa quantia no estoque!");
+          }
 
           await prisma.request
             .create({
@@ -205,16 +273,17 @@ class RequestsController {
                       },
                     });
                   }
+
+                  return response.json({
+                    status: "success",
+                    data: "Pedidos criados com sucesso!",
+                  });
                 });
             });
         });
     });
 
     prisma.$disconnect();
-    return response.json({
-      status: "success",
-      data: "Pedidos criados com sucesso!",
-    });
   }
 
   public async findOneById(request: Request, response: Response) {

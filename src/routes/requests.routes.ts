@@ -9,7 +9,12 @@ const requestsController = new RequestsController();
 
 const requestsRoutes = Router();
 
-requestsRoutes.get("/", ensureAuthenticated, requestsController.find);
+requestsRoutes.get(
+  "/",
+  ensureAuthenticated,
+  adminAuthorization,
+  requestsController.find
+);
 requestsRoutes.get(
   "/user",
   ensureAuthenticated,
@@ -17,6 +22,11 @@ requestsRoutes.get(
 );
 
 requestsRoutes.post("/", ensureAuthenticated, requestsController.create);
-// requestsRoutes.patch("/status/:code", ensureAuthenticated, adminAuthorization, requestsController.toggleStatus);
+requestsRoutes.patch(
+  "/status/:code",
+  ensureAuthenticated,
+  adminAuthorization,
+  requestsController.toggleStatus
+);
 
 export default requestsRoutes;

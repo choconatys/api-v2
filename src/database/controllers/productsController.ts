@@ -28,6 +28,23 @@ class ProductsController {
       });
   }
 
+  public async findAll(request: Request, response: Response) {
+    console.log("aqui");
+    const prisma = new PrismaClient();
+
+    await prisma.product
+      .findMany()
+      .then((products) => {
+        return response.json({
+          status: "success",
+          data: products,
+        });
+      })
+      .finally(() => {
+        prisma.$disconnect();
+      });
+  }
+
   public async findOne(request: Request, response: Response) {
     const prisma = new PrismaClient();
 
@@ -48,6 +65,49 @@ class ProductsController {
           status: "success",
           data: product,
         });
+      })
+      .finally(() => {
+        prisma.$disconnect();
+      });
+  }
+
+  public async toggleAvailable(request: Request, response: Response) {
+    const prisma = new PrismaClient();
+
+    const { id } = request.params;
+
+    if (!isUuid(id)) throw new AppError("Erro, id invalido!", 404);
+
+    await prisma.product
+      .findUnique({
+        where: {
+          id,
+        },
+      })
+      .then(async (product) => {
+        if (!product) throw new AppError("Produto não encontrado!", 404);
+
+        if (product.available == false && product.quantity <= 0) {
+          throw new AppError("Erro, produto não pode ser alterado!");
+        }
+
+        await prisma.product
+          .update({
+            where: {
+              id,
+            },
+            data: {
+              available: !product.available,
+            },
+          })
+          .then(async () => {
+            await prisma.product.findMany().then((products) => {
+              return response.json({
+                status: "success",
+                data: products,
+              });
+            });
+          });
       })
       .finally(() => {
         prisma.$disconnect();
