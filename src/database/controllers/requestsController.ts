@@ -150,7 +150,7 @@ class RequestsController {
         }
 
         let lastStatus = "";
-        const requestStatus = requests.map((reqItem) => {
+        requests.map((reqItem) => {
           if (lastStatus == "") {
             lastStatus = reqItem.status;
           } else {
@@ -192,6 +192,8 @@ class RequestsController {
               status: "ENVIADO",
             },
           });
+        } else {
+          throw new AppError("Impossivel alterar o status desse pedido!");
         }
 
         return response.json({
