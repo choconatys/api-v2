@@ -196,9 +196,11 @@ class RequestsController {
           throw new AppError("Impossivel alterar o status desse pedido!");
         }
 
-        return response.json({
-          status: "success",
-          data: "Status alterado com sucesso!",
+        await prisma.request.findMany().then((requests) => {
+          return response.json({
+            status: "success",
+            data: requests,
+          });
         });
       })
       .finally(() => prisma.$disconnect());
@@ -221,69 +223,76 @@ class RequestsController {
 
     if (!user) throw new AppError("Usuario não encontrado!");
 
-    requestData.requests.map(async (reqData) => {
-      await prisma.product
-        .findUnique({
-          where: {
-            id: reqData.id,
-          },
-        })
-        .then(async (product) => {
-          if (!product) throw new AppError("Produto não encontrado!");
-          if (!product.available)
-            throw new AppError("O produto não esta disponivel!");
+    requestData.requests.map(
+      async (reqData: {
+        id: any;
+        quantity: number;
+        price: any;
+        itemTotal: any;
+      }) => {
+        await prisma.product
+          .findUnique({
+            where: {
+              id: reqData.id,
+            },
+          })
+          .then(async (product) => {
+            if (!product) throw new AppError("Produto não encontrado!");
+            if (!product.available)
+              throw new AppError("O produto não esta disponivel!");
 
-          if (reqData.quantity > product.quantity) {
-            throw new AppError("Não temos essa quantia no estoque!");
-          }
+            if (reqData.quantity > product.quantity) {
+              throw new AppError("Não temos essa quantia no estoque!");
+            }
 
-          await prisma.request
-            .create({
-              data: {
-                code: requestData.code,
-                quantity: reqData.quantity,
-                userId,
-                productId: reqData.id,
-                value_per_product: reqData.price,
-                status: "AGUARDANDO_CONFIRMACAO",
-                delivery_tax: 5,
-                total: reqData.itemTotal,
-              },
-            })
-            .then(async () => {
-              await prisma.product
-                .update({
-                  where: {
-                    id: product.id,
-                  },
-                  data: {
-                    quantity: product.quantity - reqData.quantity,
-                  },
-                  select: {
-                    id: true,
-                    quantity: true,
-                  },
-                })
-                .then(async (product) => {
-                  if (product.quantity === 0) {
-                    await prisma.product.update({
-                      where: {
-                        id: product.id,
-                      },
-                      data: {
-                        available: false,
-                      },
+            await prisma.request
+              .create({
+                data: {
+                  code: requestData.code,
+                  quantity: reqData.quantity,
+                  userId,
+                  productId: reqData.id,
+                  value_per_product: reqData.price,
+                  status: "AGUARDANDO_CONFIRMACAO",
+                  delivery_tax: 5,
+                  total: reqData.itemTotal,
+                },
+              })
+              .then(async () => {
+                await prisma.product
+                  .update({
+                    where: {
+                      id: product.id,
+                    },
+                    data: {
+                      quantity: product.quantity - reqData.quantity,
+                    },
+                    select: {
+                      id: true,
+                      quantity: true,
+                    },
+                  })
+                  .then(async (product) => {
+                    if (product.quantity === 0) {
+                      await prisma.product.update({
+                        where: {
+                          id: product.id,
+                        },
+                        data: {
+                          available: false,
+                        },
+                      });
+                    }
+
+                    return response.json({
+                      status: "success",
+                      data: "Pedidos criados com sucesso!",
                     });
-                  }
-
-                  return response.json({
-                    status: "success",
-                    data: "Pedidos criados com sucesso!",
                   });
-                });
-            });
-        });
-    });
+              });
+          });
+      }
+    );
 
     prisma.$disconnect();
   }
