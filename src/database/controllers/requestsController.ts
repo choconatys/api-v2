@@ -26,7 +26,7 @@ class RequestsController {
       .then(async (requests) => {
         const now = new Date();
 
-        let acumulattorMensal = 0,
+        let acumulattorTotal = 0,
           contReqsMensal = 0;
         let acumulattorDiario = 0,
           contReqsDiario = 0;
@@ -35,8 +35,8 @@ class RequestsController {
           const diff = Math.abs(now.getTime() - past.getTime());
           const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
-          if (days < 30 && reqOrder.status === "ENVIADO") {
-            acumulattorMensal += reqOrder.quantity * reqOrder.value_per_product;
+          if (reqOrder.status === "ENVIADO") {
+            acumulattorTotal += reqOrder.quantity * reqOrder.value_per_product;
             contReqsMensal++;
           }
 
@@ -46,7 +46,7 @@ class RequestsController {
           }
         });
 
-        if (contReqsMensal > 0) acumulattorMensal += 5;
+        if (contReqsMensal > 0) acumulattorTotal += 5;
         if (contReqsDiario > 0) acumulattorDiario += 5;
 
         let codeAnterior: any = [];
@@ -124,7 +124,7 @@ class RequestsController {
           data: {
             requests: finalResponseRequests,
             faturamento: {
-              mensal: acumulattorMensal,
+              total: acumulattorTotal,
               diario: acumulattorDiario,
             },
           },
