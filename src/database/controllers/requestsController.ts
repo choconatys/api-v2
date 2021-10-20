@@ -36,9 +36,12 @@ class RequestsController {
           const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
           if (reqOrder.status === "ENVIADO") {
-            acumulattorTotal += reqOrder.quantity * reqOrder.value_per_product;
+            acumulattorTotal +=
+              reqOrder.quantity * reqOrder.value_per_product + 5;
             contReqsMensal++;
           }
+
+          console.log(acumulattorTotal);
 
           if (days <= 1 && reqOrder.status === "ENVIADO") {
             acumulattorDiario += reqOrder.quantity * reqOrder.value_per_product;
