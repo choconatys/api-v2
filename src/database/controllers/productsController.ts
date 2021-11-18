@@ -49,13 +49,14 @@ class ProductsController {
     const prisma = new PrismaClient();
 
     const { id } = request.params;
+    console.log(id);
 
-    if (!isUuid(id) || !id) throw new AppError("Erro, id invalido!", 404);
+    if (!id) throw new AppError("Erro, id invalido!", 404);
 
     await prisma.product
-      .delete({
+      .deleteMany({
         where: {
-          id: request.params.id,
+          id,
         },
       })
       .then(async (products) => {
@@ -65,6 +66,9 @@ class ProductsController {
             data: productsData,
           });
         });
+      })
+      .catch((er) => {
+        console.log(er);
       })
       .finally(() => {
         prisma.$disconnect();
@@ -153,7 +157,7 @@ class ProductsController {
     date.setMilliseconds(0);
     date.setSeconds(0);
 
-    const { name, description, price }: ProductCreate = request.body;
+    const { name, description, price, quantity }: ProductCreate = request.body;
 
     if (name && description && price && request.file) {
       const date = new Date();
@@ -181,7 +185,7 @@ class ProductsController {
                   description,
                   price: Number(price),
                   available: true,
-                  quantity: 1,
+                  quantity: quantity || 1,
                 },
               })
               .then((productCreated) => {
