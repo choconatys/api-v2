@@ -159,7 +159,7 @@ class ProductsController {
 
     const { name, description, price, quantity }: ProductCreate = request.body;
 
-    if (name && description && price && request.file) {
+    if (name && description && price && request.file && quantity) {
       const date = new Date();
 
       date.setMilliseconds(0);
@@ -185,7 +185,7 @@ class ProductsController {
                   description,
                   price: Number(price),
                   available: true,
-                  quantity: quantity || 1,
+                  quantity: Number(quantity),
                 },
               })
               .then((productCreated) => {
