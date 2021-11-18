@@ -23,6 +23,7 @@ productRoutes.get(
 
 productRoutes.get("/:id", productsController.findOne);
 productRoutes.patch("/available/:id", productsController.toggleAvailable);
+productRoutes.patch("/delete/:id", productsController.delete);
 
 productRoutes.post(
   "/",

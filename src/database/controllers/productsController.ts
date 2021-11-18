@@ -45,12 +45,38 @@ class ProductsController {
       });
   }
 
+  public async delete(request: Request, response: Response) {
+    const prisma = new PrismaClient();
+
+    const { id } = request.params;
+
+    if (!isUuid(id) || !id) throw new AppError("Erro, id invalido!", 404);
+
+    await prisma.product
+      .delete({
+        where: {
+          id: request.params.id,
+        },
+      })
+      .then(async (products) => {
+        await prisma.product.findMany().then((productsData) => {
+          return response.json({
+            status: "success",
+            data: productsData,
+          });
+        });
+      })
+      .finally(() => {
+        prisma.$disconnect();
+      });
+  }
+
   public async findOne(request: Request, response: Response) {
     const prisma = new PrismaClient();
 
     const { id } = request.params;
 
-    if (!isUuid(id)) throw new AppError("Erro, id invalido!", 404);
+    if (!isUuid(id) || !id) throw new AppError("Erro, id invalido!", 404);
 
     await prisma.product
       .findUnique({
