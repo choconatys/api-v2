@@ -44,7 +44,8 @@ class RequestsController {
           console.log(acumulattorTotal);
 
           if (days <= 1 && reqOrder.status === "ENVIADO") {
-            acumulattorDiario += reqOrder.quantity * reqOrder.value_per_product;
+            acumulattorDiario +=
+              reqOrder.quantity * reqOrder.value_per_product + 5;
             contReqsDiario++;
           }
         });
